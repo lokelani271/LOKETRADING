@@ -1,609 +1,258 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Semi-Skimmed Milk — Pure. Light. Essential.</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lait Demi-Écrémé — Pure &amp; Light</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root { --blue: #4fc3f7; --blue2: #0288d1; --white: #e8f4fd; --bg: #07080f; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--white); font-family: 'Helvetica Neue', Arial, sans-serif; overflow-x: hidden; }
 
-    :root {
-      --blue-neon: #4fc3f7;
-      --blue-deep: #0d47a1;
-      --white-soft: #e8f4fd;
-      --bg-dark: #0a0a1a;
-    }
+  #bgCanvas { position: fixed; top:0; left:0; width:100%; height:100%; z-index:0; pointer-events:none; }
+  #mainCanvas { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index:2; }
+  #hero { position:relative; height:100vh; display:flex; align-items:center; justify-content:center; overflow:hidden; }
 
-    html { scroll-behavior: smooth; }
+  .hero-text { position:absolute; bottom:80px; left:50%; transform:translateX(-50%); text-align:center; z-index:3; animation:fadeUp 1.2s ease 0.5s both; white-space:nowrap; }
+  .hero-text h1 { font-size:clamp(2rem,8vw,5rem); font-weight:100; letter-spacing:0.3em; text-transform:uppercase; color:var(--white); text-shadow:0 0 40px rgba(79,195,247,0.5); }
+  .hero-text p { margin-top:12px; font-size:clamp(0.75rem,2vw,1rem); letter-spacing:0.5em; color:var(--blue); text-transform:uppercase; }
 
-    body {
-      background: var(--bg-dark);
-      color: #fff;
-      font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
-      overflow-x: hidden;
-    }
+  .scroll-hint { position:absolute; bottom:24px; left:50%; transform:translateX(-50%); z-index:10; display:flex; flex-direction:column; align-items:center; gap:8px; opacity:0.6; }
+  .scroll-hint span { font-size:10px; letter-spacing:0.4em; text-transform:uppercase; color:var(--blue); }
+  .scroll-line { width:1px; height:40px; background:linear-gradient(to bottom,var(--blue),transparent); animation:scrollPulse 1.8s ease-in-out infinite; }
+  @keyframes scrollPulse { 0%,100%{opacity:0.3;transform:scaleY(0.6);transform-origin:top} 50%{opacity:1;transform:scaleY(1);transform-origin:top} }
+  @keyframes fadeUp { from{opacity:0;transform:translate(-50%,30px)} to{opacity:1;transform:translate(-50%,0)} }
 
-    /* ── Canvas ── */
-    #canvas-container {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      z-index: 0;
-      pointer-events: none;
-    }
+  section { min-height:100vh; display:flex; align-items:center; justify-content:center; position:relative; z-index:2; }
+  .section-inner { text-align:center; padding:40px 20px; max-width:700px; }
+  .section-tag { font-size:11px; letter-spacing:0.5em; text-transform:uppercase; color:var(--blue); margin-bottom:24px; opacity:0; transform:translateY(30px); transition:all 0.8s ease; }
+  .section-title { font-size:clamp(2rem,6vw,4rem); font-weight:200; line-height:1.1; letter-spacing:0.05em; text-transform:uppercase; color:var(--white); opacity:0; transform:translateY(40px); transition:all 0.9s ease 0.15s; text-shadow:0 0 60px rgba(79,195,247,0.3); }
+  .section-sub { margin-top:24px; font-size:clamp(0.9rem,2vw,1.1rem); font-weight:300; color:rgba(232,244,253,0.6); line-height:1.7; opacity:0; transform:translateY(30px); transition:all 0.8s ease 0.3s; }
+  .section-divider { width:60px; height:1px; background:linear-gradient(to right,transparent,var(--blue),transparent); margin:32px auto; opacity:0; transition:all 0.8s ease 0.25s; }
+  section.visible .section-tag, section.visible .section-title, section.visible .section-sub, section.visible .section-divider { opacity:1; transform:translateY(0); }
 
-    canvas { display: block; }
+  .cta-btn { display:inline-block; margin-top:40px; padding:16px 48px; border:1px solid var(--blue); color:var(--blue); text-decoration:none; font-size:12px; letter-spacing:0.4em; text-transform:uppercase; position:relative; overflow:hidden; opacity:0; transform:translateY(20px); transition:all 0.8s ease 0.4s, background 0.3s, color 0.3s; cursor:pointer; }
+  section.visible .cta-btn { opacity:1; transform:translateY(0); }
+  .cta-btn::before { content:''; position:absolute; inset:0; background:var(--blue); transform:scaleX(0); transform-origin:left; transition:transform 0.4s ease; z-index:-1; }
+  .cta-btn:hover::before { transform:scaleX(1); }
+  .cta-btn:hover { color:var(--bg); }
 
-    /* ── Scroll driver ── */
-    #scroll-driver {
-      position: relative;
-      z-index: 1;
-      height: 500vh;
-    }
+  .stats { display:flex; gap:40px; justify-content:center; margin-top:40px; flex-wrap:wrap; opacity:0; transform:translateY(30px); transition:all 0.8s ease 0.35s; }
+  section.visible .stats { opacity:1; transform:translateY(0); }
+  .stat-card { text-align:center; padding:24px 32px; border:1px solid rgba(79,195,247,0.15); background:rgba(79,195,247,0.03); }
+  .stat-num { font-size:3rem; font-weight:100; color:var(--blue); line-height:1; }
+  .stat-label { font-size:10px; letter-spacing:0.4em; text-transform:uppercase; color:rgba(232,244,253,0.5); margin-top:8px; }
 
-    /* ── Sections ── */
-    .section {
-      position: relative;
-      height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      pointer-events: none;
-    }
-
-    .section-content {
-      text-align: center;
-      padding: 2rem;
-      opacity: 0;
-      transform: translateY(40px);
-      transition: opacity 0.9s cubic-bezier(.22,1,.36,1),
-                  transform 0.9s cubic-bezier(.22,1,.36,1);
-      max-width: 700px;
-    }
-
-    .section-content.visible {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    .s1 { align-items: flex-end; padding-bottom: 10vh; }
-    .s1 .section-content { align-self: flex-end; margin-bottom: 6vh; }
-    .s2 { align-items: center; }
-    .s2 .section-content { margin-left: 5vw; text-align: left; }
-    .s3 { align-items: center; justify-content: center; }
-
-    /* ── Typography ── */
-    .eyebrow {
-      font-size: clamp(0.7rem, 1.5vw, 0.9rem);
-      letter-spacing: 0.35em;
-      text-transform: uppercase;
-      color: var(--blue-neon);
-      margin-bottom: 1rem;
-      font-weight: 400;
-    }
-
-    h1 {
-      font-size: clamp(2.8rem, 8vw, 6rem);
-      font-weight: 800;
-      line-height: 1.05;
-      letter-spacing: -0.02em;
-      color: #fff;
-      margin-bottom: 1.2rem;
-    }
-
-    h2 {
-      font-size: clamp(2rem, 5vw, 4rem);
-      font-weight: 700;
-      line-height: 1.1;
-      letter-spacing: -0.01em;
-      color: #fff;
-      margin-bottom: 1.2rem;
-    }
-
-    .accent { color: var(--blue-neon); }
-
-    .subtitle {
-      font-size: clamp(1rem, 2vw, 1.25rem);
-      color: rgba(255,255,255,0.6);
-      font-weight: 300;
-      letter-spacing: 0.04em;
-      line-height: 1.6;
-      margin-bottom: 2rem;
-    }
-
-    /* ── CTA Button ── */
-    .cta-btn {
-      display: inline-block;
-      padding: 1rem 2.8rem;
-      border: 1.5px solid var(--blue-neon);
-      color: var(--blue-neon);
-      font-size: 1rem;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      text-decoration: none;
-      border-radius: 2px;
-      background: transparent;
-      cursor: pointer;
-      transition: background 0.3s, color 0.3s, box-shadow 0.3s;
-      pointer-events: all;
-      font-family: inherit;
-    }
-
-    .cta-btn:hover {
-      background: var(--blue-neon);
-      color: #0a0a1a;
-      box-shadow: 0 0 40px rgba(79,195,247,0.5);
-    }
-
-    /* ── Divider ── */
-    .divider {
-      width: 60px;
-      height: 2px;
-      background: var(--blue-neon);
-      margin: 0 auto 1.5rem auto;
-      opacity: 0.6;
-    }
-
-    .s2 .divider { margin: 0 0 1.5rem 0; }
-
-    /* ── Scroll hint ── */
-    #scroll-hint {
-      position: fixed;
-      bottom: 2.5rem;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.4rem;
-      z-index: 10;
-      opacity: 1;
-      transition: opacity 0.5s;
-      pointer-events: none;
-    }
-
-    #scroll-hint.hidden { opacity: 0; }
-
-    .scroll-hint-text {
-      font-size: 0.65rem;
-      letter-spacing: 0.3em;
-      text-transform: uppercase;
-      color: rgba(255,255,255,0.35);
-    }
-
-    .scroll-hint-line {
-      width: 1px;
-      height: 50px;
-      background: linear-gradient(to bottom, rgba(79,195,247,0.6), transparent);
-      animation: scrollPulse 1.8s ease-in-out infinite;
-    }
-
-    @keyframes scrollPulse {
-      0%, 100% { transform: scaleY(1); opacity: 0.6; }
-      50%       { transform: scaleY(0.6); opacity: 1; }
-    }
-
-    /* ── Vignette ── */
-    #vignette {
-      position: fixed;
-      inset: 0;
-      background: radial-gradient(ellipse at center,
-        transparent 40%,
-        rgba(10,10,26,0.55) 100%);
-      z-index: 0;
-      pointer-events: none;
-    }
-
-    /* ── Progress bar ── */
-    #progress-bar {
-      position: fixed;
-      top: 0; left: 0;
-      height: 2px;
-      background: linear-gradient(to right, var(--blue-deep), var(--blue-neon));
-      z-index: 100;
-      width: 0%;
-      transition: width 0.1s linear;
-      box-shadow: 0 0 8px var(--blue-neon);
-    }
-
-    /* ── Nav dots ── */
-    #nav-dots {
-      position: fixed;
-      right: 1.8rem;
-      top: 50%;
-      transform: translateY(-50%);
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      z-index: 50;
-      pointer-events: none;
-    }
-
-    .nav-dot {
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.2);
-      transition: background 0.3s, transform 0.3s;
-    }
-
-    .nav-dot.active {
-      background: var(--blue-neon);
-      transform: scale(1.5);
-      box-shadow: 0 0 8px var(--blue-neon);
-    }
-
-    /* ── Mobile ── */
-    @media (max-width: 600px) {
-      .s2 .section-content { margin-left: 0; text-align: center; }
-      .s2 .divider { margin: 0 auto 1.5rem auto; }
-      #nav-dots { display: none; }
-    }
-  </style>
+  #progress { position:fixed; top:0; left:0; height:2px; background:linear-gradient(to right,var(--blue2),var(--blue)); z-index:100; width:0%; box-shadow:0 0 8px var(--blue); }
+  .vignette { position:fixed; inset:0; background:radial-gradient(ellipse at center,transparent 40%,rgba(7,8,15,0.7) 100%); z-index:1; pointer-events:none; }
+  footer { text-align:center; padding:60px 20px; font-size:11px; letter-spacing:0.3em; color:rgba(232,244,253,0.2); text-transform:uppercase; position:relative; z-index:2; }
+</style>
 </head>
 <body>
 
-<div id="progress-bar"></div>
-<div id="vignette"></div>
-<div id="canvas-container"></div>
+<div id="progress"></div>
+<div class="vignette"></div>
+<canvas id="bgCanvas"></canvas>
 
-<div id="nav-dots">
-  <div class="nav-dot active"></div>
-  <div class="nav-dot"></div>
-  <div class="nav-dot"></div>
+<div id="hero">
+  <canvas id="mainCanvas" width="400" height="520"></canvas>
+  <div class="hero-text">
+    <h1>Pure &amp; Light</h1>
+    <p>Lait Demi-Écrémé Premium</p>
+  </div>
+  <div class="scroll-hint">
+    <span>Scroll</span>
+    <div class="scroll-line"></div>
+  </div>
 </div>
 
-<div id="scroll-hint">
-  <div class="scroll-hint-text">Scroll</div>
-  <div class="scroll-hint-line"></div>
-</div>
-
-<div id="scroll-driver">
-
-  <!-- Section 1 -->
-  <div class="section s1">
-    <div class="section-content" id="content-1">
-      <p class="eyebrow">Semi-Skimmed Milk</p>
-      <h1>Pure.<br><span class="accent">Light.</span><br>Essential.</h1>
-      <div class="divider"></div>
-      <p class="subtitle">Nature's finest — refined for the modern life.</p>
+<section id="s2">
+  <div class="section-inner">
+    <div class="section-tag">Notre Promesse</div>
+    <h2 class="section-title">50% moins de graisses.<br>100% de goût.</h2>
+    <div class="section-divider"></div>
+    <p class="section-sub">Un équilibre parfait entre légèreté et richesse nutritionnelle. Chaque gorgée révèle la fraîcheur d'un lait soigneusement sélectionné.</p>
+    <div class="stats">
+      <div class="stat-card"><div class="stat-num">1.5<small style="font-size:1.5rem">%</small></div><div class="stat-label">Matière grasse</div></div>
+      <div class="stat-card"><div class="stat-num">120</div><div class="stat-label">mg Calcium / 100ml</div></div>
+      <div class="stat-card"><div class="stat-num">0<small style="font-size:1.5rem">g</small></div><div class="stat-label">Additifs</div></div>
     </div>
   </div>
+</section>
 
-  <!-- Section 2 -->
-  <div class="section s2">
-    <div class="section-content" id="content-2">
-      <p class="eyebrow">Nutritional balance</p>
-      <div class="divider"></div>
-      <h2><span class="accent">50%</span> less fat.<br>100% taste.</h2>
-      <p class="subtitle">
-        All the richness, half the fat.<br>
-        Crafted for those who refuse to compromise.
-      </p>
-    </div>
+<section id="s3">
+  <div class="section-inner">
+    <div class="section-tag">Naturellement Bon</div>
+    <h2 class="section-title">La nature.<br>Rien d'autre.</h2>
+    <div class="section-divider"></div>
+    <p class="section-sub">Issu d'élevages responsables, notre lait demi-écrémé préserve toutes les vitamines essentielles. Doux pour vous, respectueux de la planète.</p>
   </div>
+</section>
 
-  <!-- Section 3 -->
-  <div class="section s3">
-    <div class="section-content" id="content-3">
-      <p class="eyebrow">The finest choice</p>
-      <h2>Make every<br>morning <span class="accent">count.</span></h2>
-      <div class="divider"></div>
-      <p class="subtitle">Sustainably sourced. Expertly balanced.<br>Delivered fresh to you.</p>
-      <button class="cta-btn" onclick="ctaClick()">Discover Our Milk</button>
-    </div>
+<section id="s4">
+  <div class="section-inner">
+    <div class="section-tag">Découvrez</div>
+    <h2 class="section-title">Essayez la différence.</h2>
+    <div class="section-divider"></div>
+    <p class="section-sub">Rejoignez des milliers de familles qui ont choisi la légèreté sans compromis.</p>
+    <a class="cta-btn" href="#">Découvrir notre lait</a>
   </div>
+</section>
 
-</div>
-
-<!-- Three.js r128 -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<footer>© 2025 — Lait Demi-Écrémé Premium — Qualité Naturelle</footer>
 
 <script>
-/* =================================================================
-   THREE.JS SCENE
-   ================================================================= */
+// ── STARS ────────────────────────────────────────────────────────────────────
+const bgC = document.getElementById('bgCanvas');
+const bgX = bgC.getContext('2d');
+function resizeBg(){ bgC.width=innerWidth; bgC.height=innerHeight; }
+resizeBg(); addEventListener('resize', resizeBg);
+const stars = Array.from({length:180},()=>({x:Math.random(),y:Math.random(),r:Math.random()*1.2+0.2,o:Math.random()*0.5+0.1,sp:Math.random()*0.003+0.001,ph:Math.random()*Math.PI*2}));
+function drawBg(t){ bgX.clearRect(0,0,bgC.width,bgC.height); stars.forEach(s=>{ const o=s.o*(0.5+0.5*Math.sin(t*s.sp+s.ph)); bgX.beginPath(); bgX.arc(s.x*bgC.width,s.y*bgC.height,s.r,0,Math.PI*2); bgX.fillStyle=`rgba(79,195,247,${o})`; bgX.fill(); }); }
 
-const container = document.getElementById('canvas-container');
-let W = window.innerWidth;
-let H = window.innerHeight;
+// ── CARTON ───────────────────────────────────────────────────────────────────
+const mc = document.getElementById('mainCanvas');
+const cx2d = mc.getContext('2d');
 
-// Renderer
-const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
-renderer.setSize(W, H);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-renderer.outputEncoding = THREE.sRGBEncoding;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.1;
-container.appendChild(renderer.domElement);
-
-// Scene
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x0a0a1a);
-scene.fog = new THREE.FogExp2(0x0a0a1a, 0.032);
-
-// Camera
-const camera = new THREE.PerspectiveCamera(50, W / H, 0.1, 200);
-camera.position.set(0, 0, 9);
-camera.lookAt(0, 0, 0);
-
-/* ── Lighting ── */
-const ambientLight = new THREE.AmbientLight(0x0d1a2e, 3);
-scene.add(ambientLight);
-
-const keyLight = new THREE.PointLight(0x4fc3f7, 5, 30);
-keyLight.position.set(4, 5, 4);
-keyLight.castShadow = true;
-scene.add(keyLight);
-
-const fillLight = new THREE.PointLight(0x1565c0, 3, 25);
-fillLight.position.set(-4, 2, 3);
-scene.add(fillLight);
-
-const rimLight = new THREE.PointLight(0xa8d8f0, 4, 20);
-rimLight.position.set(0, -3, -5);
-scene.add(rimLight);
-
-const accentLight = new THREE.PointLight(0x80d8ff, 3.5, 15);
-accentLight.position.set(0, 4, -2);
-scene.add(accentLight);
-
-/* ── Star field ── */
-(function buildStars() {
-  const geo = new THREE.BufferGeometry();
-  const count = 2000;
-  const pos = new Float32Array(count * 3);
-  for (let i = 0; i < count; i++) {
-    pos[i * 3]     = (Math.random() - 0.5) * 130;
-    pos[i * 3 + 1] = (Math.random() - 0.5) * 130;
-    pos[i * 3 + 2] = (Math.random() - 0.5) * 80 - 20;
-  }
-  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-  scene.add(new THREE.Points(geo, new THREE.PointsMaterial({
-    color: 0xadd8e6, size: 0.08, transparent: true, opacity: 0.45, sizeAttenuation: true
-  })));
-})();
-
-/* ── Milk Carton group ── */
-const cartonGroup = new THREE.Group();
-scene.add(cartonGroup);
-
-// Shared physical material
-const milkMat = new THREE.MeshPhysicalMaterial({
-  color: 0xeef6ff,
-  metalness: 0.02,
-  roughness: 0.12,
-  transmission: 0.12,
-  opacity: 0.98,
-  transparent: true,
-  clearcoat: 0.9,
-  clearcoatRoughness: 0.08,
-  reflectivity: 0.7,
-  envMapIntensity: 1.4,
-});
-
-// Body
-const bodyGeo = new THREE.BoxGeometry(1.2, 2.2, 1.2);
-const body = new THREE.Mesh(bodyGeo, milkMat);
-body.castShadow = true;
-body.receiveShadow = true;
-cartonGroup.add(body);
-
-// Gable top
-const topGeo = new THREE.CylinderGeometry(0.05, 0.62, 0.55, 4, 1);
-const topMesh = new THREE.Mesh(topGeo, milkMat.clone());
-topMesh.position.y = 1.37;
-topMesh.rotation.y = Math.PI / 4;
-topMesh.castShadow = true;
-cartonGroup.add(topMesh);
-
-// Base chamfer
-const baseGeo = new THREE.CylinderGeometry(0.58, 0.64, 0.12, 4, 1);
-const baseMesh = new THREE.Mesh(baseGeo, milkMat.clone());
-baseMesh.position.y = -1.12;
-baseMesh.rotation.y = Math.PI / 4;
-cartonGroup.add(baseMesh);
-
-// Front label — semi-transparent blue tint
-const labelMat = new THREE.MeshPhysicalMaterial({
-  color: 0xc8e6ff,
-  metalness: 0.0,
-  roughness: 0.4,
-  transparent: true,
-  opacity: 0.45,
-});
-const label = new THREE.Mesh(new THREE.PlaneGeometry(0.88, 1.38), labelMat);
-label.position.set(0, 0.05, 0.612);
-cartonGroup.add(label);
-
-// Neon edge lines
-const edgesMat = new THREE.LineBasicMaterial({
-  color: 0x4fc3f7, transparent: true, opacity: 0.22
-});
-cartonGroup.add(new THREE.LineSegments(new THREE.EdgesGeometry(bodyGeo), edgesMat));
-
-// Inner glow sphere
-const glowMesh = new THREE.Mesh(
-  new THREE.SphereGeometry(1.85, 32, 32),
-  new THREE.MeshBasicMaterial({ color: 0x1565c0, transparent: true, opacity: 0.06, side: THREE.BackSide })
-);
-cartonGroup.add(glowMesh);
-
-/* ── Floating particles ── */
-const PARTICLE_COUNT = 300;
-const particleGeo = new THREE.BufferGeometry();
-const pPos   = new Float32Array(PARTICLE_COUNT * 3);
-const pPhase = new Float32Array(PARTICLE_COUNT);
-const pRadii = new Float32Array(PARTICLE_COUNT);
-
-for (let i = 0; i < PARTICLE_COUNT; i++) {
-  const r     = 2.4 + Math.random() * 2.8;
-  const theta = Math.random() * Math.PI * 2;
-  const phi   = Math.random() * Math.PI;
-  pPos[i*3]   = r * Math.sin(phi) * Math.cos(theta);
-  pPos[i*3+1] = r * Math.cos(phi);
-  pPos[i*3+2] = r * Math.sin(phi) * Math.sin(theta);
-  pPhase[i]   = Math.random() * Math.PI * 2;
-  pRadii[i]   = r;
-}
-particleGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
-
-const particleMat = new THREE.PointsMaterial({
-  color: 0xaee8ff, size: 0.055, transparent: true, opacity: 0.65, sizeAttenuation: true
-});
-const particles = new THREE.Points(particleGeo, particleMat);
-scene.add(particles);
-
-/* ── Ground reflection ── */
-const ground = new THREE.Mesh(
-  new THREE.PlaneGeometry(24, 24),
-  new THREE.MeshPhysicalMaterial({
-    color: 0x0d1a2e, metalness: 0.7, roughness: 0.15,
-    transparent: true, opacity: 0.45
-  })
-);
-ground.rotation.x = -Math.PI / 2;
-ground.position.y = -2.1;
-ground.receiveShadow = true;
-scene.add(ground);
-
-/* =================================================================
-   SCROLL STATE
-   ================================================================= */
-let scrollY    = 0;
-let scrollPct  = 0;
-let smoothScroll = 0;
-
-window.addEventListener('scroll', () => {
-  scrollY = window.scrollY;
-  const maxScroll = document.body.scrollHeight - window.innerHeight;
-  scrollPct = maxScroll > 0 ? scrollY / maxScroll : 0;
-
-  // Progress bar
-  document.getElementById('progress-bar').style.width = (scrollPct * 100) + '%';
-
-  // Nav dots
-  const p = scrollPct;
-  dots[0].classList.toggle('active', p < 0.35);
-  dots[1].classList.toggle('active', p >= 0.35 && p < 0.70);
-  dots[2].classList.toggle('active', p >= 0.70);
-
-  // Scroll hint
-  if (!hintHidden && scrollY > 60) {
-    document.getElementById('scroll-hint').classList.add('hidden');
-    hintHidden = true;
-  }
-}, { passive: true });
-
-const dots = document.querySelectorAll('.nav-dot');
-let hintHidden = false;
-
-/* ── Intersection Observer for text sections ── */
-const observer = new IntersectionObserver((entries) => {
-  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
-}, { threshold: 0.25 });
-document.querySelectorAll('.section-content').forEach(s => observer.observe(s));
-
-/* =================================================================
-   ANIMATION LOOP
-   ================================================================= */
-const clock = new THREE.Clock();
-
-function lerp(a, b, t) { return a + (b - a) * t; }
-
-function animate() {
-  requestAnimationFrame(animate);
-  const t  = clock.getElapsedTime();
-  const sp = smoothScroll;
-
-  // Ease scroll
-  smoothScroll = lerp(smoothScroll, scrollPct, 0.055);
-
-  /* Camera movement */
-  if (sp < 0.35) {
-    const lt = sp / 0.35;
-    camera.position.x = 0;
-    camera.position.y = lerp(-0.4, 0, lt);
-    camera.position.z = lerp(12, 7.5, lt);
-  } else if (sp < 0.70) {
-    const lt = (sp - 0.35) / 0.35;
-    camera.position.x = lerp(0, -2.8, lt);
-    camera.position.y = lerp(0, 0.6, lt);
-    camera.position.z = lerp(7.5, 7, lt);
-  } else {
-    const lt = (sp - 0.70) / 0.30;
-    camera.position.x = lerp(-2.8, 0, lt);
-    camera.position.y = lerp(0.6, 1.6, lt);
-    camera.position.z = lerp(7, 9.5, lt);
-  }
-  camera.lookAt(0, 0.2, 0);
-
-  /* Carton rotation */
-  const spinSpeed = sp > 0.35 && sp < 0.70
-    ? lerp(0.4, 1.4, (sp - 0.35) / 0.35)
-    : sp >= 0.70
-      ? lerp(1.4, 0.28, (sp - 0.70) / 0.30)
-      : 0.4;
-
-  cartonGroup.rotation.y = t * spinSpeed;
-  cartonGroup.rotation.x = Math.sin(t * (sp > 0.35 && sp < 0.70 ? 0.8 : 0.3)) * (sp > 0.35 && sp < 0.70 ? 0.12 : 0.055);
-  cartonGroup.position.y = Math.sin(t * 0.75) * 0.09;
-
-  /* Particles */
-  const pPositions = particleGeo.attributes.position.array;
-  const swirlFactor = sp > 0.35 && sp < 0.70
-    ? lerp(1, 3.8, (sp - 0.35) / 0.35)
-    : sp >= 0.70
-      ? lerp(3.8, 1.2, (sp - 0.70) / 0.30)
-      : 1;
-
-  for (let i = 0; i < PARTICLE_COUNT; i++) {
-    const phase  = pPhase[i];
-    const baseR  = pRadii[i];
-    const speed  = 0.18 * swirlFactor;
-    const angle  = t * speed + phase;
-    const r      = baseR + Math.sin(t * 0.5 + phase) * 0.3;
-    pPositions[i*3]   = r * Math.cos(angle);
-    pPositions[i*3+1] = Math.sin(t * 0.28 + phase * 1.5) * 1.3;
-    pPositions[i*3+2] = r * Math.sin(angle);
-  }
-  particleGeo.attributes.position.needsUpdate = true;
-  particleMat.opacity = sp > 0.35 && sp < 0.70 ? 0.85 : 0.6 + Math.sin(t * 1.1) * 0.1;
-
-  /* Animated lights */
-  accentLight.position.x = Math.sin(t * 0.55) * 4;
-  accentLight.position.z = Math.cos(t * 0.55) * 4;
-  accentLight.intensity  = 2.8 + Math.sin(t * 1.3) * 0.9;
-  keyLight.intensity     = 4.0 + Math.sin(t * 0.85) * 0.7;
-  edgesMat.opacity       = 0.18 + Math.sin(t * 1.05) * 0.1;
-
-  renderer.render(scene, camera);
+function proj(x,y,z,ry,rx,ox,oy){
+  const cy=Math.cos(ry),sy=Math.sin(ry);
+  const x1=x*cy-z*sy, z1=x*sy+z*cy;
+  const cx_=Math.cos(rx),sx=Math.sin(rx);
+  const y1=y*cx_-z1*sx, z2=y*sx+z1*cx_;
+  const f=500, sc=f/(f+z2+300);
+  return {x:ox+x1*sc, y:oy+y1*sc, z:z2};
 }
 
-animate();
+function faceDir(a,b,c){ return (b.x-a.x)*(c.y-a.y)-(b.y-a.y)*(c.x-a.x); }
 
-/* ── Resize ── */
-window.addEventListener('resize', () => {
-  W = window.innerWidth;
-  H = window.innerHeight;
-  camera.aspect = W / H;
-  camera.updateProjectionMatrix();
-  renderer.setSize(W, H);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-});
+const W=70,H=160,D=70,TH=48;
+const hw=W/2,hh=H/2,hd=D/2;
 
-/* ── CTA click ── */
-function ctaClick() {
-  const btn = document.querySelector('.cta-btn');
-  btn.style.boxShadow = '0 0 80px rgba(79,195,247,0.9)';
-  setTimeout(() => { btn.style.boxShadow = ''; }, 700);
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+function drawCarton(ry,rx,t){
+  cx2d.clearRect(0,0,mc.width,mc.height);
+  const ox=mc.width/2, oy=mc.height/2-10;
+
+  const raw={
+    b0:[-hw,hh,-hd], b1:[hw,hh,-hd], b2:[hw,hh,hd], b3:[-hw,hh,hd],
+    t0:[-hw,-hh,-hd],t1:[hw,-hh,-hd],t2:[hw,-hh,hd], t3:[-hw,-hh,hd],
+    ap:[0,-hh-TH,0]
+  };
+  const p={};
+  Object.entries(raw).forEach(([k,v])=>{ p[k]=proj(v[0],v[1],v[2],ry,rx,ox,oy); });
+
+  const faces=[
+    {v:[p.b0,p.b1,p.t1,p.t0], li:0.7, front:true},
+    {v:[p.b1,p.b2,p.t2,p.t1], li:0.35},
+    {v:[p.b2,p.b3,p.t3,p.t2], li:0.15},
+    {v:[p.b3,p.b0,p.t0,p.t3], li:0.45},
+    {v:[p.b0,p.b3,p.b2,p.b1], li:0.08},
+    {v:[p.t0,p.t1,p.ap], li:0.85, py:true},
+    {v:[p.t1,p.t2,p.ap], li:0.5,  py:true},
+    {v:[p.t2,p.t3,p.ap], li:0.25, py:true},
+    {v:[p.t3,p.t0,p.ap], li:0.65, py:true},
+  ];
+
+  faces.forEach(f=>{ f.z=f.v.reduce((s,p)=>s+(p.z||0),0)/f.v.length; });
+  faces.sort((a,b)=>b.z-a.z);
+
+  faces.forEach(f=>{
+    const n=faceDir(f.v[0],f.v[1],f.v[2]);
+    if(f.py && n<0) return;
+    if(!f.py && n>0) return;
+    const li=f.li+0.04*Math.sin(t*0.002+f.li*3);
+    cx2d.save();
+    cx2d.beginPath();
+    cx2d.moveTo(f.v[0].x,f.v[0].y);
+    f.v.slice(1).forEach(pt=>cx2d.lineTo(pt.x,pt.y));
+    cx2d.closePath();
+    const g=cx2d.createLinearGradient(f.v[0].x,f.v[0].y,f.v[Math.floor(f.v.length/2)].x,f.v[Math.floor(f.v.length/2)].y);
+    const b1=Math.floor(li*90), b2=Math.floor(li*50);
+    g.addColorStop(0,`rgba(8,${Math.floor(li*35)},${b1},0.97)`);
+    g.addColorStop(1,`rgba(4,${Math.floor(li*15)},${b2},0.97)`);
+    cx2d.fillStyle=g;
+    cx2d.fill();
+    cx2d.strokeStyle=`rgba(${Math.floor(li*60)},${Math.floor(li*120+80)},${Math.floor(li*180+40)},0.8)`;
+    cx2d.lineWidth=0.9;
+    cx2d.stroke();
+    cx2d.restore();
+    if(f.front && n<=0) drawLabel(f.v,t);
+  });
+
+  // glow edges
+  const ga=0.25+0.15*Math.sin(t*0.003);
+  cx2d.save(); cx2d.globalAlpha=ga; cx2d.strokeStyle='#4fc3f7'; cx2d.lineWidth=1.5; cx2d.shadowColor='#4fc3f7'; cx2d.shadowBlur=12;
+  [[p.t0,p.t1],[p.t1,p.t2],[p.ap,p.t0],[p.ap,p.t1],[p.ap,p.t2],[p.ap,p.t3]].forEach(([a,b])=>{
+    cx2d.beginPath(); cx2d.moveTo(a.x,a.y); cx2d.lineTo(b.x,b.y); cx2d.stroke();
+  });
+  cx2d.restore();
+
+  // floor glow
+  const fy=oy+hh+22;
+  const rg=cx2d.createRadialGradient(ox,fy,0,ox,fy,65);
+  rg.addColorStop(0,`rgba(79,195,247,${0.1+0.05*Math.sin(t*0.002)})`);
+  rg.addColorStop(1,'rgba(79,195,247,0)');
+  cx2d.fillStyle=rg; cx2d.beginPath(); cx2d.ellipse(ox,fy,65,16,0,0,Math.PI*2); cx2d.fill();
 }
+
+function drawLabel(verts,t){
+  const cx_=verts.reduce((s,p)=>s+p.x,0)/verts.length;
+  const cy_=verts.reduce((s,p)=>s+p.y,0)/verts.length;
+  const ins=0.82;
+  const iv=verts.map(p=>({x:cx_+(p.x-cx_)*ins,y:cy_+(p.y-cy_)*ins}));
+  cx2d.save();
+  cx2d.beginPath(); cx2d.moveTo(iv[0].x,iv[0].y); iv.slice(1).forEach(p=>cx2d.lineTo(p.x,p.y)); cx2d.closePath();
+  const g=cx2d.createLinearGradient(iv[0].x,iv[0].y,iv[2].x,iv[2].y);
+  g.addColorStop(0,'rgba(79,195,247,0.12)'); g.addColorStop(0.5,'rgba(255,255,255,0.07)'); g.addColorStop(1,'rgba(79,195,247,0.05)');
+  cx2d.fillStyle=g; cx2d.fill();
+  const w=Math.abs(iv[0].x-iv[1].x)||50;
+  cx2d.font=`bold ${w*0.25}px Helvetica Neue,Arial`;
+  cx2d.fillStyle='rgba(255,255,255,0.92)'; cx2d.textAlign='center'; cx2d.textBaseline='middle';
+  cx2d.shadowColor='#4fc3f7'; cx2d.shadowBlur=8;
+  cx2d.fillText('PURE',cx_,cy_-10);
+  cx2d.font=`${w*0.14}px Helvetica Neue,Arial`;
+  cx2d.fillStyle='rgba(79,195,247,0.9)';
+  cx2d.fillText('DEMI-ÉCRÉMÉ',cx_,cy_+10);
+  cx2d.restore();
+}
+
+// ── PARTICLES ────────────────────────────────────────────────────────────────
+const pts=Array.from({length:55},()=>({a:Math.random()*Math.PI*2,r:85+Math.random()*80,sp:(Math.random()-0.5)*0.005+0.003,y:(Math.random()-0.5)*280,vy:(Math.random()-0.5)*0.25,sz:Math.random()*2+0.4,al:Math.random()*0.45+0.15,ph:Math.random()*Math.PI*2}));
+
+function drawPts(ox,oy,t,sw){
+  pts.forEach(p=>{
+    p.a+=p.sp*(1+sw*2.5);
+    p.y+=p.vy; if(p.y>200)p.y=-200; if(p.y<-200)p.y=200;
+    const px=ox+Math.cos(p.a)*p.r;
+    const py=oy+p.y+Math.sin(p.a*0.5+p.ph)*18;
+    const al=p.al*(0.5+0.5*Math.sin(t*0.002+p.ph));
+    cx2d.beginPath(); cx2d.arc(px,py,p.sz,0,Math.PI*2);
+    cx2d.fillStyle=`rgba(79,195,247,${al})`; cx2d.fill();
+  });
+}
+
+// ── LOOP ─────────────────────────────────────────────────────────────────────
+let ry=0.4, rx=0.1, try=0.4, sw=0;
+function lerp(a,b,t){return a+(b-a)*t;}
+
+function loop(t){
+  requestAnimationFrame(loop);
+  const sp=scrollY/(document.body.scrollHeight-innerHeight)||0;
+  document.getElementById('progress').style.width=(sp*100)+'%';
+  try+=0.006; ry=lerp(ry,try,0.08);
+  if(sp<0.25){rx=lerp(rx,0.08,0.03);sw=lerp(sw,0,0.05);}
+  else if(sp<0.55){rx=lerp(rx,0.18,0.03);sw=lerp(sw,1,0.05);}
+  else{rx=lerp(rx,-0.05,0.03);sw=lerp(sw,0.2,0.05);}
+  drawBg(t);
+  const ox=mc.width/2, oy=mc.height/2-10;
+  drawPts(ox,oy,t,sw);
+  drawCarton(ry,rx,t);
+}
+requestAnimationFrame(loop);
+
+// ── REVEAL ───────────────────────────────────────────────────────────────────
+const obs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');}),{threshold:0.2});
+document.querySelectorAll('section').forEach(s=>obs.observe(s));
 </script>
 </body>
 </html>
